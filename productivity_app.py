@@ -139,6 +139,13 @@ st.markdown("""
         margin-bottom: 16px;
     }
 
+    /* Bold text styling */
+    strong, b {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-muted);
+    }
+
     /* Columns spacing */
     [data-testid="column"] {
         padding: 0 8px;
@@ -177,6 +184,18 @@ st.markdown("""
 
     [data-testid="metric-container"] > div > div:last-child {
         font-size: 20px !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Reduce emoji size specifically */
+    [data-testid="metric-container"] svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+
+    /* Target the number part after emoji */
+    [data-testid="metric-container"] > div > div:last-child > span {
+        font-size: 16px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -395,12 +414,32 @@ for idx, day in enumerate(DAYS):
             col_eff1, col_eff2 = st.columns(2)
 
             with col_eff1:
-                status = "🟢" if rest_m <= work_m else "🔴"
-                st.metric("Rest ≤ Work", f"{status} {rest_m}/{work_m}")
+                status_color = "#2e7d32" if rest_m <= work_m else "#c62828"
+                status_icon = "●"
+                st.markdown(
+                    f"""
+                    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#6b6b6b;">
+                        <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                        <strong>Rest ≤ Work</strong>
+                        <span style="margin-left:auto; font-weight:600;">{rest_m}/{work_m}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
             with col_eff2:
-                status = "🟢" if work_m >= 120 else "🔴"
-                st.metric("Work ≥ 120min", f"{status} {work_m}min")
+                status_color = "#2e7d32" if work_m >= 120 else "#c62828"
+                status_icon = "●"
+                st.markdown(
+                    f"""
+                    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#6b6b6b;">
+                        <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                        <strong>Work ≥ 120min</strong>
+                        <span style="margin-left:auto; font-weight:600;">{work_m}min</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
         with col_a:
             st.markdown("#### 🌤️ Afternoon")
@@ -457,12 +496,32 @@ for idx, day in enumerate(DAYS):
             col_eff1, col_eff2 = st.columns(2)
 
             with col_eff1:
-                status = "🟢" if rest_a <= work_a else "🔴"
-                st.metric("Rest ≤ Work", f"{status} {rest_a}/{work_a}")
+                status_color = "#2e7d32" if rest_a <= work_a else "#c62828"
+                status_icon = "●"
+                st.markdown(
+                    f"""
+                    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#6b6b6b;">
+                        <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                        <strong>Rest ≤ Work</strong>
+                        <span style="margin-left:auto; font-weight:600;">{rest_a}/{work_a}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
             with col_eff2:
-                status = "🟢" if work_a >= 120 else "🔴"
-                st.metric("Work ≥ 120min", f"{status} {work_a}min")
+                status_color = "#2e7d32" if work_a >= 120 else "#c62828"
+                status_icon = "●"
+                st.markdown(
+                    f"""
+                    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#6b6b6b;">
+                        <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                        <strong>Work ≥ 120min</strong>
+                        <span style="margin-left:auto; font-weight:600;">{work_a}min</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
 st.markdown("---")
 st.markdown("### 📊 Weekly Overview")
