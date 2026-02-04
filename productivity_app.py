@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+import json
+import os
 
 st.set_page_config(page_title="Productivity Tracker", layout="wide")
 
@@ -16,13 +18,51 @@ COLOR_PALETTE = [
     "#00ACC1",
 ]
 
+DATA_FILE = os.path.join(os.path.dirname(__file__), "productivity_data.json")
+
+# Nếu chạy từ Electron, sử dụng userData folder, ngược lại sử dụng APPDATA
+if "FOCUS_TREE_DATA_DIR" in os.environ:
+    data_dir = os.environ["FOCUS_TREE_DATA_DIR"]
+    os.makedirs(data_dir, exist_ok=True)
+    DATA_FILE = os.path.join(data_dir, "productivity_data.json")
+else:
+    # Fallback: sử dụng APPDATA
+    appdata = os.environ.get("APPDATA", os.path.expanduser("~"))
+    data_dir = os.path.join(appdata, "FocusTree")
+    os.makedirs(data_dir, exist_ok=True)
+    DATA_FILE = os.path.join(data_dir, "productivity_data.json")
+
+def load_data():
+    """
+    Tải dữ liệu từ file JSON nếu tồn tại, ngược lại khởi tạo dữ liệu trống
+    """
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for day in DAYS:
+                if day not in data:
+                    data[day] = {block: [] for block in BLOCKS}
+            return data
+        except Exception:
+            pass
+    return {day: {block: [] for block in BLOCKS} for day in DAYS}
+
+def save_data():
+    """
+    Lưu dữ liệu vào file JSON
+    """
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(st.session_state.week_data, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
 """
 Initialize application state
 """
 if "week_data" not in st.session_state:
-    st.session_state.week_data = {
-        day: {block: [] for block in BLOCKS} for day in DAYS
-    }
+    st.session_state.week_data = load_data()
 
 """
 Utility functions
