@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
-import json
-import os
 
 st.set_page_config(page_title="Productivity Tracker", layout="wide")
 
@@ -18,61 +16,39 @@ COLOR_PALETTE = [
     "#00ACC1",
 ]
 
-DATA_FILE = os.path.join(os.path.dirname(__file__), "productivity_data.json")
-
-def load_data():
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            # Ensure structure and convert inner stacks to lists if needed
-            for day in DAYS:
-                if day not in data:
-                    data[day] = {block: [] for block in BLOCKS}
-                else:
-                    for block in BLOCKS:
-                        stacks = data[day].get(block, [])
-                        # ensure each stack is a two-element list
-                        data[day][block] = [list(s) for s in stacks]
-            return data
-        except Exception:
-            pass
-
-    return {day: {block: [] for block in BLOCKS} for day in DAYS}
-
-def save_data():
-    try:
-        with open(DATA_FILE, "w", encoding="utf-8") as f:
-            json.dump(st.session_state.week_data, f, ensure_ascii=False, indent=2)
-    except Exception:
-        pass
-
+"""
+Initialize application state
+"""
 if "week_data" not in st.session_state:
-    st.session_state.week_data = load_data()
+    st.session_state.week_data = {
+        day: {block: [] for block in BLOCKS} for day in DAYS
+    }
 
+"""
+Utility functions
+"""
 def add_stack(day, block, stack_type, minutes):
     stacks = st.session_state.week_data[day][block]
 
-    # Enforce alternating rule
+    """
+    Enforce alternating rule
+    """
     if not stacks and stack_type != "work":
         return
     if stacks and stacks[-1][0] == stack_type:
         return
 
-    stacks.append([stack_type, minutes])
-    save_data()
+    stacks.append((stack_type, minutes))
 
 
 def remove_stack(day, block):
     stacks = st.session_state.week_data[day][block]
     if stacks:
         stacks.pop()
-        save_data()
 
 
 def clear_block(day, block):
     st.session_state.week_data[day][block] = []
-    save_data()
 
 
 def summarize_block(day, block):
@@ -134,8 +110,9 @@ def render_chart(df, title):
     st.altair_chart(chart, use_container_width=True)
 
 
-st.title("Productivity Tracker")
-
+"""
+UI Tabs
+"""
 tabs = st.tabs(DAYS)
 
 for idx, day in enumerate(DAYS):
@@ -191,7 +168,9 @@ for idx, day in enumerate(DAYS):
                     f"{'🟢' if work >= 120 else '🔴'} ({work})"
                 )
 
-
+"""
+Charts
+"""
 st.markdown("---")
 st.subheader("Weekly Overview")
 
