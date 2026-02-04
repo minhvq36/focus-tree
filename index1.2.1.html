@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Focus Tree Stopwatch</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: #e8f5e9;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tree {
+            font-size: 50px;
+            transition: all 0.5s;
+            margin: 20px;
+        }
+
+        .timer-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+
+        #progress-circle {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        #time-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .note-container {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        textarea {
+            width: 500px;
+            height: 20px;
+            font-size: 14px;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #aaa;
+            resize: none;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>Grow Your Focus Tree! 🌱</h1>
+        <div class="timer-container">
+            <svg id="progress-circle">
+                <circle cx="100" cy="100" r="90" fill="none" stroke="#c8e6c9" stroke-width="10"/>
+                <circle cx="100" cy="100" r="90" fill="none" stroke="#2e7d32" stroke-width="10"
+                        stroke-dasharray="565.48" stroke-dashoffset="565.48" id="progress"/>
+            </svg>
+            <div id="time-display">00:00</div>
+        </div>
+        <div class="tree">🌱</div>
+        <div>
+            <button onclick="startTimer()">Start</button>
+            <button onclick="pauseTimer()">Pause</button>
+            <button onclick="resetTimer()">Reset</button>
+        </div>
+
+        <div class="note-container">
+            <textarea id="note-input" placeholder=""></textarea><br>
+            <button onclick="submitNote()">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        const fs = require('fs');
+        const path = require('path');
+
+        let startTime = null;
+        let elapsedTime = 0;
+        let timerId = null;
+        const treeStages = ['🌱', '🌿', '🌳', '🌲'];
+        let currentStage = 0;
+
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+            const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+            return `${minutes}:${seconds}`;
+        }
+
+        function updateTimer() {
+            const now = Date.now();
+            const currentElapsed = now - startTime + elapsedTime;
+            document.getElementById('time-display').textContent = formatTime(currentElapsed);
+
+            if (currentElapsed >= 2 * 60 * 60 * 1000) {
+                updateTree(3);
+            } else if (currentElapsed >= 50 * 60 * 1000) {
+                updateTree(2);
+            } else if (currentElapsed >= 25 * 60 * 1000) {
+                updateTree(1);
+            }
+
+            const maxProgressTime = 2 * 60 * 60 * 1000;
+            const progress = Math.min(currentElapsed / maxProgressTime, 1);
+            document.getElementById('progress').style.strokeDashoffset = 565.48 * (1 - progress);
+        }
+
+        function updateTree(stage) {
+            if (stage !== currentStage) {
+                currentStage = stage;
+                document.querySelector('.tree').textContent = treeStages[currentStage];
+                alert('Cây đã tiến hóa!');
+            }
+        }
+
+        function startTimer() {
+            if (!timerId) {
+                startTime = Date.now();
+                timerId = setInterval(updateTimer, 1000);
+            }
+        }
+
+        function pauseTimer() {
+            if (timerId) {
+                clearInterval(timerId);
+                timerId = null;
+                elapsedTime += Date.now() - startTime;
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerId);
+            timerId = null;
+            startTime = null;
+            elapsedTime = 0;
+            currentStage = 0;
+            document.getElementById('time-display').textContent = '00:00';
+            document.querySelector('.tree').textContent = treeStages[0];
+            document.getElementById('progress').style.strokeDashoffset = 565.48;
+        }
+
+        function submitNote() {
+            const note = document.getElementById('note-input').value.trim();
+            if (note !== '') {
+                const timestamp = new Date().toISOString();
+                const line = `[${timestamp}] ${note}\n`;
+                const filePath = path.join(__dirname, 'AUTONOTES.txt');
+                try {
+                    fs.appendFileSync(filePath, line, 'utf8');
+                    document.getElementById('note-input').value = '';
+                } catch (err) {
+                    alert("Lỗi khi lưu ghi chú: " + err.message);
+                }
+            } else {
+                alert("Vui lòng nhập ghi chú trước khi lưu.");
+            }
+        }
+
+        document.getElementById('time-display').textContent = '00:00';
+    </script>
+</body>
+</html>

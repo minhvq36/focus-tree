@@ -1,0 +1,8 @@
+__pycache__/
+.env
+.venv/
+dist/
+build/
+*.log
+FocusTreeApp-win32-x64/
+node_modules/

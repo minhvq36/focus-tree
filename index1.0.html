@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Focus Tree Grower</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background: #e8f5e9;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tree {
+            font-size: 50px;
+            transition: all 0.5s;
+            margin: 20px;
+        }
+
+        .timer-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+
+        #progress-circle {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        #time-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>Grow Your Focus Tree! 🌱</h1>
+        <div class="timer-container">
+            <svg id="progress-circle">
+                <circle cx="100" cy="100" r="90" fill="none" stroke="#c8e6c9" stroke-width="10"/>
+                <circle cx="100" cy="100" r="90" fill="none" stroke="#2e7d32" stroke-width="10"
+                        stroke-dasharray="565.48" stroke-dashoffset="0" id="progress"/>
+            </svg>
+            <div id="time-display">25:00</div>
+        </div>
+        <div class="tree">🌱</div>
+        <div>
+            <button onclick="startTimer()">Bắt đầu</button>
+            <button onclick="resetTimer()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        const totalTime = 25 * 60 * 1000; // 25 phút, tính theo milliseconds
+        let startTime = null;
+        let timerId = null;
+        const treeStages = ['🌱', '🌿', '🌳', '🌲'];
+        let currentStage = 0;
+
+        function updateDisplay() {
+            if (!startTime) return;
+
+            const now = Date.now();
+            const elapsed = now - startTime;
+            let remaining = totalTime - elapsed;
+
+            if (remaining <= 0) {
+                clearInterval(timerId);
+                timerId = null;
+                remaining = 0;
+                currentStage = Math.min(currentStage + 1, treeStages.length - 1);
+                document.querySelector('.tree').textContent = treeStages[currentStage];
+                alert('Chúc mừng! Cây của bạn đã phát triển!');
+            }
+
+            const secondsLeft = Math.ceil(remaining / 1000);
+            const minutes = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
+            const seconds = (secondsLeft % 60).toString().padStart(2, '0');
+            document.getElementById('time-display').textContent = `${minutes}:${seconds}`;
+
+            const progress = (1 - remaining / totalTime) * 565.48;
+            document.getElementById('progress').style.strokeDashoffset = progress;
+        }
+
+        function startTimer() {
+            if (!timerId) {
+                startTime = Date.now();
+                timerId = setInterval(updateDisplay, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerId);
+            timerId = null;
+            startTime = null;
+            document.getElementById('time-display').textContent = '25:00';
+            document.querySelector('.tree').textContent = treeStages[0];
+            document.getElementById('progress').style.strokeDashoffset = 0;
+        }
+
+        // Khởi tạo hiển thị ban đầu
+        document.getElementById('time-display').textContent = '25:00';
+    </script>
+</body>
+</html>
