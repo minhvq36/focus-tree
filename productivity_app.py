@@ -10,9 +10,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-"""
-Theme Configuration - Match Focus Tree design (calm, light green)
-"""
 st.markdown("""
 <style>
     :root {
@@ -22,6 +19,11 @@ st.markdown("""
         --card-white: #ffffff;
         --text-muted: #6b6b6b;
         --border-light: #e6e6e6;
+    }
+
+    /* Hide Streamlit topbar */
+    [data-testid="stAppHeader"] {
+        display: none;
     }
 
     /* Main background */
@@ -62,24 +64,28 @@ st.markdown("""
 
     /* Buttons */
     .stButton > button {
-        background-color: var(--primary-green);
-        color: white;
-        border: none;
+        background-color: #f3f4f6;
+        color: #374151;
+        border: 1px solid #e5e7eb;
         border-radius: 8px;
-        padding: 10px 18px;
+        padding: 10px 16px;
         font-weight: 600;
+        font-size: 14px;
         transition: all 0.2s ease;
         width: 100%;
     }
 
     .stButton > button:hover {
-        background-color: #1b5e20;
+        background-color: #e5e7eb;
+        color: #1f2937;
+        border-color: #d1d5db;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(46, 125, 50, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
     .stButton > button:active {
         transform: translateY(0);
+        background-color: #d1d5db;
     }
 
     /* Input fields */
@@ -159,6 +165,19 @@ st.markdown("""
         font-size: 20px;
         margin: 0 4px;
     }
+
+    /* Reduce metrics size */
+    [data-testid="metric-container"] {
+        padding: 12px 16px !important;
+    }
+
+    [data-testid="metric-container"] > div > div:first-child {
+        font-size: 12px !important;
+    }
+
+    [data-testid="metric-container"] > div > div:last-child {
+        font-size: 20px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -190,7 +209,7 @@ else:
 
 def load_data():
     """
-    Tải dữ liệu từ file JSON nếu tồn tại, ngược lại khởi tạo dữ liệu trống
+    Load data from JSON file or initialize with empty structure
     """
     if os.path.exists(DATA_FILE):
         try:
@@ -206,7 +225,7 @@ def load_data():
 
 def save_data():
     """
-    Lưu dữ liệu vào file JSON
+    Save data to JSON file
     """
     try:
         with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -214,21 +233,14 @@ def save_data():
     except Exception:
         pass
 
-"""
-Initialize application state
-"""
+
 if "week_data" not in st.session_state:
     st.session_state.week_data = load_data()
 
-"""
-Utility functions
-"""
+
 def add_stack(day, block, stack_type, minutes):
     stacks = st.session_state.week_data[day][block]
 
-    """
-    Enforce alternating rule
-    """
     if not stacks and stack_type != "work":
         return
     if stacks and stacks[-1][0] == stack_type:
@@ -287,9 +299,6 @@ def build_chart_df(block):
 
 
 def render_chart(df, title):
-    """
-    Render stacked bar chart with improved styling
-    """
     chart = (
         alt.Chart(df)
         .mark_bar()
@@ -323,9 +332,6 @@ def render_chart(df, title):
     st.altair_chart(chart, use_container_width=True, theme=None)
 
 
-"""
-UI Layout - Tabs with improved spacing
-"""
 st.markdown("### 📅 Weekly Productivity Tracker")
 
 tabs = st.tabs(DAYS)
@@ -334,9 +340,6 @@ for idx, day in enumerate(DAYS):
     with tabs[idx]:
         col_m, col_a = st.columns(2, gap="large")
 
-        """
-        Morning Block
-        """
         with col_m:
             st.markdown("#### 🌅 Morning")
 
@@ -399,9 +402,6 @@ for idx, day in enumerate(DAYS):
                 status = "🟢" if work_m >= 120 else "🔴"
                 st.metric("Work ≥ 120min", f"{status} {work_m}min")
 
-        """
-        Afternoon Block
-        """
         with col_a:
             st.markdown("#### 🌤️ Afternoon")
 
@@ -464,25 +464,18 @@ for idx, day in enumerate(DAYS):
                 status = "🟢" if work_a >= 120 else "🔴"
                 st.metric("Work ≥ 120min", f"{status} {work_a}min")
 
-"""
-Weekly Overview - Summary Charts
-"""
 st.markdown("---")
 st.markdown("### 📊 Weekly Overview")
 
 chart_col1, chart_col2 = st.columns(2, gap="large")
 
 with chart_col1:
-    st.markdown("**Morning Sessions**")
     render_chart(build_chart_df("morning"), "Morning Productivity")
 
 with chart_col2:
-    st.markdown("**Afternoon Sessions**")
     render_chart(build_chart_df("afternoon"), "Afternoon Productivity")
 
-"""
-Summary Statistics
-"""
+
 st.markdown("---")
 st.markdown("### 📈 Weekly Statistics")
 
