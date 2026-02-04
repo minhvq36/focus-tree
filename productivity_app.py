@@ -49,7 +49,7 @@ st.markdown("""
         font-weight: 600;
         color: var(--text-muted);
         border-bottom: 3px solid transparent;
-        transition: all 0.2s ease;
+        transition: border-bottom-color 0.2s ease;
     }
 
     .stTabs [aria-selected="true"] {
@@ -59,7 +59,6 @@ st.markdown("""
 
     .stTabs [aria-selected="false"]:hover {
         color: var(--primary-green);
-        opacity: 0.7;
     }
 
     /* Buttons */
@@ -410,7 +409,7 @@ for idx, day in enumerate(DAYS):
             work_m, rest_m = summarize_block(day, "morning")
 
             st.markdown("---")
-            st.markdown("**Efficiency Check**")
+            st.markdown("### Efficiency Check")
             col_eff1, col_eff2 = st.columns(2)
 
             with col_eff1:
@@ -418,10 +417,12 @@ for idx, day in enumerate(DAYS):
                 status_icon = "●"
                 st.markdown(
                     f"""
-                    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#6b6b6b;">
-                        <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                    <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:#6b6b6b;">
                         <strong>Rest ≤ Work</strong>
-                        <span style="margin-left:auto; font-weight:600;">{rest_m}/{work_m}</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                            <span style="font-weight:600;">{rest_m}/{work_m}</span>
+                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -432,10 +433,12 @@ for idx, day in enumerate(DAYS):
                 status_icon = "●"
                 st.markdown(
                     f"""
-                    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#6b6b6b;">
-                        <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                    <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:#6b6b6b;">
                         <strong>Work ≥ 120min</strong>
-                        <span style="margin-left:auto; font-weight:600;">{work_m}min</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                            <span style="font-weight:600;">{work_m}min</span>
+                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -492,7 +495,7 @@ for idx, day in enumerate(DAYS):
             work_a, rest_a = summarize_block(day, "afternoon")
 
             st.markdown("---")
-            st.markdown("**Efficiency Check**")
+            st.markdown("### Efficiency Check")
             col_eff1, col_eff2 = st.columns(2)
 
             with col_eff1:
@@ -500,10 +503,12 @@ for idx, day in enumerate(DAYS):
                 status_icon = "●"
                 st.markdown(
                     f"""
-                    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#6b6b6b;">
-                        <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                    <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:#6b6b6b;">
                         <strong>Rest ≤ Work</strong>
-                        <span style="margin-left:auto; font-weight:600;">{rest_a}/{work_a}</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                            <span style="font-weight:600;">{rest_a}/{work_a}</span>
+                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True
@@ -514,10 +519,12 @@ for idx, day in enumerate(DAYS):
                 status_icon = "●"
                 st.markdown(
                     f"""
-                    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:#6b6b6b;">
-                        <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                    <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:#6b6b6b;">
                         <strong>Work ≥ 120min</strong>
-                        <span style="margin-left:auto; font-weight:600;">{work_a}min</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
+                            <span style="font-weight:600;">{work_a}min</span>
+                        </div>
                     </div>
                     """,
                     unsafe_allow_html=True
