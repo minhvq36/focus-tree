@@ -61,6 +61,15 @@ st.markdown("""
         color: var(--primary-green);
     }
 
+    /* Remove default BaseWeb focus / hover underline (orange line) */
+    .stTabs [data-baseweb="tab"]::after {
+        display: none !important;
+    }
+
+    .stTabs [data-baseweb="tab"]:focus-visible {
+        outline: none !important;
+    }
+
     /* Buttons */
     .stButton > button {
         background-color: #f3f4f6;
@@ -414,14 +423,28 @@ for idx, day in enumerate(DAYS):
 
             with col_eff1:
                 status_color = "#2e7d32" if rest_m <= work_m else "#c62828"
-                status_icon = "●"
                 st.markdown(
                     f"""
-                    <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:#6b6b6b;">
-                        <strong>Rest ≤ Work</strong>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
-                            <span style="font-weight:600;">{rest_m}/{work_m}</span>
+                    <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:8px;
+                        padding:6px 0;
+                    ">
+                        <div style="font-size:14px; font-weight:600; color:#6b6b6b;">
+                            Rest ≤ Work
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="
+                                color:{status_color};
+                                font-size:20px;
+                                line-height:1;
+                            ">●</span>
+                            <span style="
+                                font-size:18px;
+                                font-weight:700;
+                                color:#374151;
+                            ">{rest_m}/{work_m}</span>
                         </div>
                     </div>
                     """,
@@ -430,14 +453,28 @@ for idx, day in enumerate(DAYS):
 
             with col_eff2:
                 status_color = "#2e7d32" if work_m >= 120 else "#c62828"
-                status_icon = "●"
                 st.markdown(
                     f"""
-                    <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:#6b6b6b;">
-                        <strong>Work ≥ 120min</strong>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
-                            <span style="font-weight:600;">{work_m}min</span>
+                    <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:8px;
+                        padding:6px 0;
+                    ">
+                        <div style="font-size:14px; font-weight:600; color:#6b6b6b;">
+                            Work ≥ 120min
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="
+                                color:{status_color};
+                                font-size:20px;
+                                line-height:1;
+                            ">●</span>
+                            <span style="
+                                font-size:18px;
+                                font-weight:700;
+                                color:#374151;
+                            ">{work_m}min</span>
                         </div>
                     </div>
                     """,
@@ -500,14 +537,28 @@ for idx, day in enumerate(DAYS):
 
             with col_eff1:
                 status_color = "#2e7d32" if rest_a <= work_a else "#c62828"
-                status_icon = "●"
                 st.markdown(
                     f"""
-                    <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:#6b6b6b;">
-                        <strong>Rest ≤ Work</strong>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
-                            <span style="font-weight:600;">{rest_a}/{work_a}</span>
+                    <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:8px;
+                        padding:6px 0;
+                    ">
+                        <div style="font-size:14px; font-weight:600; color:#6b6b6b;">
+                            Rest ≤ Work
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="
+                                color:{status_color};
+                                font-size:20px;
+                                line-height:1;
+                            ">●</span>
+                            <span style="
+                                font-size:18px;
+                                font-weight:700;
+                                color:#374151;
+                            ">{rest_a}/{work_a}</span>
                         </div>
                     </div>
                     """,
@@ -516,14 +567,28 @@ for idx, day in enumerate(DAYS):
 
             with col_eff2:
                 status_color = "#2e7d32" if work_a >= 120 else "#c62828"
-                status_icon = "●"
                 st.markdown(
                     f"""
-                    <div style="display:flex; flex-direction:column; gap:6px; font-size:13px; color:#6b6b6b;">
-                        <strong>Work ≥ 120min</strong>
-                        <div style="display:flex; align-items:center; gap:6px;">
-                            <span style="color:{status_color}; font-size:10px;">{status_icon}</span>
-                            <span style="font-weight:600;">{work_a}min</span>
+                    <div style="
+                        display:flex;
+                        flex-direction:column;
+                        gap:8px;
+                        padding:6px 0;
+                    ">
+                        <div style="font-size:14px; font-weight:600; color:#6b6b6b;">
+                            Work ≥ 120min
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="
+                                color:{status_color};
+                                font-size:20px;
+                                line-height:1;
+                            ">●</span>
+                            <span style="
+                                font-size:18px;
+                                font-weight:700;
+                                color:#374151;
+                            ">{work_a}min</span>
                         </div>
                     </div>
                     """,
@@ -564,10 +629,10 @@ total_rest = week_morning_rest + week_afternoon_rest
 stat_col1, stat_col2, stat_col3, stat_col4 = st.columns(4, gap="small")
 
 with stat_col1:
-    st.metric("📅 Total Work", f"{total_work}h" if total_work >= 60 else f"{total_work}min", delta=None)
+    st.metric("📅 Total Work", f"{total_work/60:.1f}h" if total_work >= 60 else f"{total_work}min", delta=None)
 
 with stat_col2:
-    st.metric("☕ Total Rest", f"{total_rest}h" if total_rest >= 60 else f"{total_rest}min", delta=None)
+    st.metric("☕ Total Rest", f"{total_rest/60:.1f}h" if total_rest >= 60 else f"{total_rest}min", delta=None)
 
 with stat_col3:
     work_ratio = (total_work / (total_work + total_rest) * 100) if (total_work + total_rest) > 0 else 0
