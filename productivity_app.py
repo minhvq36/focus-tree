@@ -39,16 +39,19 @@ def add_stack(day, block, stack_type, minutes):
         return
 
     stacks.append((stack_type, minutes))
+    save_data()
 
 
 def remove_stack(day, block):
     stacks = st.session_state.week_data[day][block]
     if stacks:
         stacks.pop()
+        save_data()
 
 
 def clear_block(day, block):
     st.session_state.week_data[day][block] = []
+    save_data()
 
 
 def summarize_block(day, block):
