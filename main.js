@@ -48,6 +48,12 @@ function createWindow() {
     });
 
     ipcMain.on('app-close', () => {
+        /*
+        Kill Streamlit process before app quit
+        */
+        if (streamlitProcess) {
+            streamlitProcess.kill('SIGTERM');
+        }
         app.quit();
     });
 
@@ -78,5 +84,14 @@ function createWindow() {
         console.error('Failed to start Streamlit:', err);
     }
 }
+
+app.on('before-quit', () => {
+    /*
+    Ensure Streamlit process is killed on quit
+    */
+    if (streamlitProcess && !streamlitProcess.killed) {
+        streamlitProcess.kill('SIGTERM');
+    }
+});
 
 app.whenReady().then(createWindow);
