@@ -1,33 +1,9 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron');
-const { spawn, exec } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
-
-/* Keep track of the child process to manage its lifecycle 
-*/
 let streamlitProcess;
 
-function killStreamlit(callback) {
-    /* On Windows, spawn with shell:true creates a cmd.exe wrapper.
-    Using taskkill with /F (force) and /T (tree) ensures all child 
-    processes (Python, Streamlit) are terminated properly.
-    */
-    if (streamlitProcess && streamlitProcess.pid) {
-        const cmd = `taskkill /pid ${streamlitProcess.pid} /f /t`;
-        exec(cmd, (err) => {
-            if (err) {
-                /* Log error but proceed to quit anyway */
-                console.error('Master: Clean-up failed, process might have already exited.', err);
-            }
-            if (callback) callback();
-        });
-    } else {
-        if (callback) callback();
-    }
-}
-
 function createWindow() {
-    /* Configuration for Overlay Fullscreen mode 
-    */
     const win = new BrowserWindow({
         fullscreen: true,
         alwaysOnTop: true,
@@ -48,48 +24,51 @@ function createWindow() {
 
     win.loadFile('index.html');
 
-    /* Minimal Menu for system interaction 
-    */
+    // Add custom menu for close and minimize buttons
     const menu = Menu.buildFromTemplate([
         {
-            label: 'System',
+            label: 'Window',
             submenu: [
-                { label: 'Minimize', click: () => win.minimize() },
-                { label: 'Quit', click: () => app.quit() }
+                {
+                    label: 'Minimize',
+                    click: () => win.minimize()
+                },
+                {
+                    label: 'Close',
+                    click: () => app.quit()
+                }
             ]
         }
     ]);
+
     Menu.setApplicationMenu(menu);
 
-    /* IPC Communication 
-    */
+    win.on('closed', () => {
+        if (streamlitProcess) {
+            streamlitProcess.kill();
+        }
+    });
+
+    // Handle minimize and close buttons
     ipcMain.on('app-minimize', () => {
         win.minimize();
     });
 
     ipcMain.on('app-close', () => {
-        /* Master approach: Kill children before closing the main app 
-        */
-        killStreamlit(() => {
-            app.quit();
-        });
+        app.quit();
     });
 
-    /* Streamlit Orchestration 
-    */
+    // Start Streamlit app (use local script inside app folder)
     try {
         const scriptPath = path.join(__dirname, 'productivity_app.py');
-        const appdata = process.env.APPDATA || (process.platform === 'darwin' ? process.env.HOME + '/Library/Preferences' : process.env.HOME + '/.config');
+        const appdata = process.env.APPDATA || process.env.HOME;
         const dataPath = path.join(appdata, 'FocusTree');
-        
         const env = Object.assign({}, process.env, {
             STREAMLIT_SERVER_HEADLESS: 'true',
             FOCUS_TREE_DATA_DIR: dataPath
         });
 
-        /* We avoid shell:true here for more direct PID management if possible.
-        If 'streamlit' command is not in PATH, use absolute path to python/streamlit.
-        */
+        // Run Streamlit headless on fixed port, hide Windows console, and suppress stdio
         streamlitProcess = spawn('streamlit', [
             'run',
             scriptPath,
@@ -97,36 +76,14 @@ function createWindow() {
             '--server.port=8501',
             '--server.runOnSave=false'
         ], {
-            shell: true, // Kept for command resolution, but handled by taskkill /t
+            shell: true,
             windowsHide: true,
             stdio: 'ignore',
             env
         });
-
     } catch (err) {
-        console.error('Master Critical: Failed to boot Streamlit engine.', err);
+        console.error('Failed to start Streamlit:', err);
     }
 }
-
-/* Ensure no orphans are left when the app is closed through other means 
-*/
-app.on('before-quit', (e) => {
-    if (streamlitProcess && !streamlitProcess.killed) {
-        /* Prevent app from quitting immediately to allow cleanup */
-        e.preventDefault();
-        killStreamlit(() => {
-            streamlitProcess = null;
-            app.exit(); 
-        });
-    }
-});
-
-/* Handle Window-all-closed to ensure standard Electron behavior 
-*/
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
-});
 
 app.whenReady().then(createWindow);
