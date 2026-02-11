@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Focus Tree Stopwatch</title>
-    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
     <style>
         :root{
             --bg: #f7fbf8;
@@ -537,6 +535,12 @@
             padding: 16px;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        .chart-container > div {
+            width: 100%;
         }
 
         .stats-grid {
@@ -823,33 +827,38 @@
         let prodWeekData = null;
 
         function loadProductivityData() {
+            console.log('📊 Starting Productivity data load...');
+            
+            /* Load data and render tabs/stats IMMEDIATELY */
             ipcRenderer.invoke('load-productivity-data').then(data => {
                 prodWeekData = data;
+                console.log('✓ Data loaded. Rendering tabs & stats NOW (async charts will follow)...');
+                renderProductivityTabs();
+                renderProductivityStats();
                 
-                /* Ensure Vega libraries are loaded */
-                const checkVegaLoaded = setInterval(() => {
-                    if (typeof vegaEmbed !== 'undefined') {
-                        clearInterval(checkVegaLoaded);
-                        renderProductivityTabs();
-                        renderProductivityCharts();
-                        renderProductivityStats();
-                    }
-                }, 100);
+                /* Check for Plotly and render charts when ready */
+                checkPlotlyAndRenderCharts();
                 
-                /* Fallback: render even if Vega not available */
-                setTimeout(() => {
-                    clearInterval(checkVegaLoaded);
-                    if (prodWeekData) {
-                        renderProductivityTabs();
-                        if (typeof vegaEmbed !== 'undefined') {
-                            renderProductivityCharts();
-                        }
-                        renderProductivityStats();
-                    }
-                }, 3000);
             }).catch(err => {
                 console.error('Failed to load productivity data:', err);
             });
+        }
+
+        function checkPlotlyAndRenderCharts() {
+            let checkCount = 0;
+            const maxChecks = 100;
+            
+            const waitForPlotly = setInterval(() => {
+                checkCount++;
+                if (typeof Plotly !== 'undefined') {
+                    clearInterval(waitForPlotly);
+                    console.log('✓ Plotly ready');
+                    renderProductivityCharts();
+                } else if (checkCount >= maxChecks) {
+                    clearInterval(waitForPlotly);
+                    console.warn('✗ Plotly timeout');
+                }
+            }, 50);
         }
 
         function saveProductivityData() {
@@ -872,7 +881,7 @@
             stacks.push([stackType, minutes]);
             saveProductivityData();
             renderProductivityTab(day);
-            if (typeof vegaEmbed !== 'undefined') {
+            if (typeof Plotly !== 'undefined') {
                 renderProductivityCharts();
             }
             renderProductivityStats();
@@ -884,7 +893,7 @@
                 stacks.pop();
                 saveProductivityData();
                 renderProductivityTab(day);
-                if (typeof vegaEmbed !== 'undefined') {
+                if (typeof Plotly !== 'undefined') {
                     renderProductivityCharts();
                 }
                 renderProductivityStats();
@@ -895,7 +904,7 @@
             prodWeekData[day][block] = [];
             saveProductivityData();
             renderProductivityTab(day);
-            if (typeof vegaEmbed !== 'undefined') {
+            if (typeof Plotly !== 'undefined') {
                 renderProductivityCharts();
             }
             renderProductivityStats();
@@ -1093,159 +1102,181 @@
                 content.classList.remove('active');
             });
             document.getElementById(`prod-tab-${day}`).classList.add('active');
+            
+            /* Render the tab content when switching */
+            renderProductivityTab(day);
         }
 
         function renderProductivityCharts() {
             const container = document.getElementById('charts-container');
+            if (!container) {
+                console.error('charts-container not found');
+                return;
+            }
+            
+            console.log('📊 renderProductivityCharts called');
             container.innerHTML = '';
 
             const morningChartDiv = document.createElement('div');
             morningChartDiv.className = 'chart-container';
-            morningChartDiv.innerHTML = '<h4>Morning Productivity</h4><div id="morning-chart"></div>';
+            morningChartDiv.innerHTML = '<h4>Morning Productivity</h4><div id="morning-chart" style="width:100%;height:340px;border:1px solid #e6e6e6;"></div>';
             container.appendChild(morningChartDiv);
 
             const afternoonChartDiv = document.createElement('div');
             afternoonChartDiv.className = 'chart-container';
-            afternoonChartDiv.innerHTML = '<h4>Afternoon Productivity</h4><div id="afternoon-chart"></div>';
+            afternoonChartDiv.innerHTML = '<h4>Afternoon Productivity</h4><div id="afternoon-chart" style="width:100%;height:340px;border:1px solid #e6e6e6;"></div>';
             container.appendChild(afternoonChartDiv);
 
-            /* Wait for vegaEmbed to be available */
-            if (typeof vegaEmbed !== 'undefined') {
-                const morningData = prodBuildChartData('morning');
-                const afternoonData = prodBuildChartData('afternoon');
-
-                prodRenderVegaChart(document.getElementById('morning-chart'), morningData);
-                prodRenderVegaChart(document.getElementById('afternoon-chart'), afternoonData);
+            /* Only render charts if Plotly is available */
+            if (typeof Plotly !== 'undefined') {
+                console.log('✓ Plotly available, rendering...');
+                try {
+                    prodBuildAndRenderPlotlyCharts();
+                } catch (err) {
+                    console.error('✗ Plotly error:', err);
+                }
             } else {
-                /* Retry after a delay */
-                setTimeout(() => {
-                    const morningData = prodBuildChartData('morning');
-                    const afternoonData = prodBuildChartData('afternoon');
-
-                    prodRenderVegaChart(document.getElementById('morning-chart'), morningData);
-                    prodRenderVegaChart(document.getElementById('afternoon-chart'), afternoonData);
-                }, 500);
+                console.warn('✗ Plotly not available');
             }
         }
 
-        function prodBuildChartData(block) {
-            const rows = [];
+        function prodBuildAndRenderPlotlyCharts() {
+            const morningContainer = document.getElementById('morning-chart');
+            const afternoonContainer = document.getElementById('afternoon-chart');
+            
+            if (!morningContainer || !afternoonContainer) {
+                console.error('Chart containers not found');
+                return;
+            }
+            
+            console.log('🎨 Building Plotly charts...');
+            
+            try {
+                /* Build morning chart */
+                const morningTraces = prodBuildPlotlyTraces('morning');
+                const layout = {
+                    autosize: true,
+                    xaxis: { title: '' },
+                    yaxis: { title: '' },
+                    barmode: 'stack',
+                    bargap: 0.35,
+                    bargroupgap: 0.1,
+                    height: 340,
+                    margin: { t: 15, b: 25, l: 35, r: 15 },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { family: 'Inter, Arial', size: 12, color: '#6b6b6b' }
+                };
+                
+                Plotly.newPlot(morningContainer, morningTraces, layout, { responsive: true, displayModeBar: false });
+                console.log('✓ Morning chart rendered');
+                
+                /* Build afternoon chart */
+                const afternoonTraces = prodBuildPlotlyTraces('afternoon');
+                Plotly.newPlot(afternoonContainer, afternoonTraces, layout, { responsive: true, displayModeBar: false });
+                console.log('✓ Afternoon chart rendered');
+                
+            } catch (err) {
+                console.error('✗ Plotly render error:', err);
+            }
+        }
 
+        function prodBuildPlotlyTraces(block) {
+            /* Determine max number of concurrent stacks */
+            let maxStackCount = 0;
             PROD_DAYS.forEach(day => {
-                const stacks = prodWeekData[day][block];
-
-                rows.push({
-                    Day: day,
-                    Minutes: 0,
-                    StackIndex: -1,
-                    Color: 'rgba(0,0,0,0)'
-                });
-
-                stacks.forEach((stack, idx) => {
-                    rows.push({
-                        Day: day,
-                        Minutes: stack[1],
-                        StackIndex: idx,
-                        Color: PROD_COLOR_PALETTE[idx % PROD_COLOR_PALETTE.length]
-                    });
-                });
+                maxStackCount = Math.max(maxStackCount, prodWeekData[day][block].length);
             });
-
-            return rows;
-        }
-
-        function prodRenderVegaChart(container, data) {
-            const spec = {
-                $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
-                data: { values: data },
-                mark: 'bar',
-                encoding: {
-                    x: {
-                        field: 'Day',
-                        type: 'nominal',
-                        sort: PROD_DAYS,
-                        scale: { paddingInner: 0.5, paddingOuter: 0.3 },
-                        axis: { labelFontSize: 12, titleFontSize: 12 }
-                    },
-                    y: {
-                        field: 'Minutes',
-                        type: 'quantitative',
-                        stack: true,
-                        axis: { labelFontSize: 12, titleFontSize: 12 }
-                    },
-                    color: {
-                        field: 'Color',
-                        type: 'nominal',
-                        scale: null,
-                        legend: null
-                    },
-                    order: {
-                        field: 'StackIndex',
-                        type: 'quantitative'
-                    },
-                    tooltip: [
-                        { field: 'Day', type: 'nominal', title: 'Day' },
-                        { field: 'Minutes', type: 'quantitative', title: 'Minutes' }
-                    ]
-                },
-                width: 'container',
-                height: 340
-            };
-
-            if (typeof vegaEmbed !== 'undefined') {
-                vegaEmbed(container, spec, { renderer: 'canvas', actions: false });
+            
+            console.log('📊 Max stack count:', maxStackCount);
+            
+            /* Create traces: 1 trace per stack index, with ALL 7 days */
+            const traces = [];
+            for (let stackIndex = 0; stackIndex < maxStackCount; stackIndex++) {
+                const x = [];
+                const y = [];
+                
+                PROD_DAYS.forEach(day => {
+                    const stacks = prodWeekData[day][block];
+                    x.push(day);
+                    
+                    if (stackIndex < stacks.length) {
+                        y.push(stacks[stackIndex][1]); /* minutes value */
+                    } else {
+                        y.push(0); /* no data for this stack index on this day */
+                    }
+                });
+                
+                const color = PROD_COLOR_PALETTE[stackIndex % PROD_COLOR_PALETTE.length];
+                traces.push({
+                    x: x,
+                    y: y,
+                    name: '',
+                    type: 'bar',
+                    marker: { color: color }
+                });
+                
+                console.log('Stack', stackIndex, ':', x, '→', y);
             }
+            
+            return traces.length > 0 ? traces : [{ x: PROD_DAYS, y: [0,0,0,0,0,0,0], type: 'bar', marker: { color: '#d1d5db' } }];
         }
 
         function renderProductivityStats() {
             const container = document.getElementById('stats-container');
-            container.innerHTML = '';
+            if (!container) return;
+            
+            try {
+                container.innerHTML = '';
 
-            let weekMorningWork = 0;
-            let weekMorningRest = 0;
-            let weekAfternoonWork = 0;
-            let weekAfternoonRest = 0;
+                let weekMorningWork = 0;
+                let weekMorningRest = 0;
+                let weekAfternoonWork = 0;
+                let weekAfternoonRest = 0;
 
-            PROD_DAYS.forEach(day => {
-                const [mWork, mRest] = [
-                    prodSummarizeBlock(day, 'morning').work,
-                    prodSummarizeBlock(day, 'morning').rest
-                ];
-                const [aWork, aRest] = [
-                    prodSummarizeBlock(day, 'afternoon').work,
-                    prodSummarizeBlock(day, 'afternoon').rest
-                ];
+                PROD_DAYS.forEach(day => {
+                    const [mWork, mRest] = [
+                        prodSummarizeBlock(day, 'morning').work,
+                        prodSummarizeBlock(day, 'morning').rest
+                    ];
+                    const [aWork, aRest] = [
+                        prodSummarizeBlock(day, 'afternoon').work,
+                        prodSummarizeBlock(day, 'afternoon').rest
+                    ];
 
-                weekMorningWork += mWork;
-                weekMorningRest += mRest;
-                weekAfternoonWork += aWork;
-                weekAfternoonRest += aRest;
-            });
+                    weekMorningWork += mWork;
+                    weekMorningRest += mRest;
+                    weekAfternoonWork += aWork;
+                    weekAfternoonRest += aRest;
+                });
 
-            const totalWork = weekMorningWork + weekAfternoonWork;
-            const totalRest = weekMorningRest + weekAfternoonRest;
-            const workRatio = totalWork + totalRest > 0 ? ((totalWork / (totalWork + totalRest)) * 100).toFixed(0) : 0;
-            const dailyAvg = totalWork > 0 ? Math.floor(totalWork / 7) : 0;
+                const totalWork = weekMorningWork + weekAfternoonWork;
+                const totalRest = weekMorningRest + weekAfternoonRest;
+                const workRatio = totalWork + totalRest > 0 ? ((totalWork / (totalWork + totalRest)) * 100).toFixed(0) : 0;
+                const dailyAvg = totalWork > 0 ? Math.floor(totalWork / 7) : 0;
 
-            const stat1 = document.createElement('div');
-            stat1.className = 'stat-card';
-            stat1.innerHTML = `<div class="stat-label">📅 Total Work</div><div class="stat-value">${totalWork >= 60 ? (totalWork / 60).toFixed(1) + 'h' : totalWork + 'min'}</div>`;
-            container.appendChild(stat1);
+                const stat1 = document.createElement('div');
+                stat1.className = 'stat-card';
+                stat1.innerHTML = `<div class="stat-label">📅 Total Work</div><div class="stat-value">${totalWork >= 60 ? (totalWork / 60).toFixed(1) + 'h' : totalWork + 'min'}</div>`;
+                container.appendChild(stat1);
 
-            const stat2 = document.createElement('div');
-            stat2.className = 'stat-card';
-            stat2.innerHTML = `<div class="stat-label">☕ Total Rest</div><div class="stat-value">${totalRest >= 60 ? (totalRest / 60).toFixed(1) + 'h' : totalRest + 'min'}</div>`;
-            container.appendChild(stat2);
+                const stat2 = document.createElement('div');
+                stat2.className = 'stat-card';
+                stat2.innerHTML = `<div class="stat-label">☕ Total Rest</div><div class="stat-value">${totalRest >= 60 ? (totalRest / 60).toFixed(1) + 'h' : totalRest + 'min'}</div>`;
+                container.appendChild(stat2);
 
-            const stat3 = document.createElement('div');
-            stat3.className = 'stat-card';
-            stat3.innerHTML = `<div class="stat-label">📊 Work Ratio</div><div class="stat-value">${workRatio}%</div>`;
-            container.appendChild(stat3);
+                const stat3 = document.createElement('div');
+                stat3.className = 'stat-card';
+                stat3.innerHTML = `<div class="stat-label">📊 Work Ratio</div><div class="stat-value">${workRatio}%</div>`;
+                container.appendChild(stat3);
 
-            const stat4 = document.createElement('div');
-            stat4.className = 'stat-card';
-            stat4.innerHTML = `<div class="stat-label">📆 Daily Avg</div><div class="stat-value">${dailyAvg}min</div>`;
-            container.appendChild(stat4);
+                const stat4 = document.createElement('div');
+                stat4.className = 'stat-card';
+                stat4.innerHTML = `<div class="stat-label">📆 Daily Avg</div><div class="stat-value">${dailyAvg}min</div>`;
+                container.appendChild(stat4);
+            } catch (err) {
+                console.error('Error rendering stats:', err);
+            }
         }
 
         /* Initialize productivity app when page loads */
