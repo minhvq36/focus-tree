@@ -9,7 +9,7 @@ function createWindow() {
         alwaysOnTop: true,
         /* skipTaskbar: false ensures the icon is visible for the user */
         skipTaskbar: false,
-        transparent: true,
+        transparent: false,
         frame: false,
         resizable: false,
         webPreferences: {
