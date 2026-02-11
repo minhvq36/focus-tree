@@ -6,14 +6,21 @@ let streamlitProcess;
 function createWindow() {
     const win = new BrowserWindow({
         fullscreen: true,
-        transparent: true,
+        alwaysOnTop: true,
+        /* skipTaskbar: false ensures the icon is visible for the user */
+        skipTaskbar: false,
+        transparent: false,
         frame: false,
-        resizable: true,
+        resizable: false,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false
         }
     });
+
+    /* Force the window to stay above the Taskbar 
+    */
+    win.setAlwaysOnTop(true, 'screen-saver');
 
     win.loadFile('index.html');
 
@@ -54,10 +61,11 @@ function createWindow() {
     // Start Streamlit app (use local script inside app folder)
     try {
         const scriptPath = path.join(__dirname, 'productivity_app.py');
-        const userDataPath = app.getPath('userData');
+        const appdata = process.env.APPDATA || process.env.HOME;
+        const dataPath = path.join(appdata, 'FocusTree');
         const env = Object.assign({}, process.env, {
             STREAMLIT_SERVER_HEADLESS: 'true',
-            FOCUS_TREE_DATA_DIR: userDataPath
+            FOCUS_TREE_DATA_DIR: dataPath
         });
 
         // Run Streamlit headless on fixed port, hide Windows console, and suppress stdio
