@@ -4,15 +4,11 @@ const path = require('path');
 let streamlitProcess;
 
 function createWindow() {
-    /* Get primary display workAreaSize to respect Windows taskbar */
-    const primaryDisplay = screen.getPrimaryDisplay();
-    const { width, height } = primaryDisplay.workAreaSize;
-    
+    /*
+    Create fullscreen window and set alwaysOnTop to be above taskbar
+    */
     const win = new BrowserWindow({
-        width: width,
-        height: height,
-        x: 0,
-        y: 0,
+        fullscreen: true,
         transparent: true,
         frame: false,
         resizable: true,
@@ -21,6 +17,11 @@ function createWindow() {
             contextIsolation: false
         }
     });
+
+    /*
+    Set window always on top, even above taskbar (screen-saver level)
+    */
+    win.setAlwaysOnTop(true, 'screen-saver');
 
     win.loadFile('index.html');
 
