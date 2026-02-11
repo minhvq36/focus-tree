@@ -54,10 +54,11 @@ function createWindow() {
     // Start Streamlit app (use local script inside app folder)
     try {
         const scriptPath = path.join(__dirname, 'productivity_app.py');
-        const userDataPath = app.getPath('userData');
+        const appdata = process.env.APPDATA || process.env.HOME;
+        const dataPath = path.join(appdata, 'FocusTree');
         const env = Object.assign({}, process.env, {
             STREAMLIT_SERVER_HEADLESS: 'true',
-            FOCUS_TREE_DATA_DIR: userDataPath
+            FOCUS_TREE_DATA_DIR: dataPath
         });
 
         // Run Streamlit headless on fixed port, hide Windows console, and suppress stdio
