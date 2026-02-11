@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Focus Tree Stopwatch</title>
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
     <style>
         :root{
             --bg: #f7fbf8;
@@ -270,6 +273,312 @@
             border: none;
         }
 
+        /* Productivity App Styles */
+        .productivity-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .productivity-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 28px 32px;
+        }
+
+        .productivity-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .productivity-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .productivity-content::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        .productivity-content::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        .tabs-container {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #e6e6e6;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 16px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #6b6b6b;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button:hover {
+            color: #2e7d32;
+        }
+
+        .tab-button.active {
+            color: #2e7d32;
+            border-bottom-color: #2e7d32;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .expander {
+            background: #f9fafb;
+            border: 1px solid #e6e6e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .expander-header {
+            padding: 12px 16px;
+            background: #f9fafb;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6b6b6b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .expander-header:hover {
+            background: #f3f4f6;
+            color: #2e7d32;
+        }
+
+        .expander-header::before {
+            content: "▶";
+            display: inline-block;
+            transition: transform 0.2s ease;
+            font-size: 12px;
+        }
+
+        .expander-header.open::before {
+            transform: rotate(90deg);
+        }
+
+        .expander-content {
+            display: none;
+            background: #fafafa;
+            padding: 16px;
+            border-top: 1px solid #e6e6e6;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .expander-content.open {
+            display: block;
+        }
+
+        .expander-content p {
+            margin: 8px 0;
+            color: #6b6b6b;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 8px;
+            align-items: end;
+        }
+
+        .input-row input {
+            padding: 10px 12px;
+            border: 1px solid #e6e6e6;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .input-row input:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .button-group button {
+            padding: 10px 16px;
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .button-group button:hover {
+            background-color: #e5e7eb;
+            color: #1f2937;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-buttons button {
+            padding: 10px 16px;
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .action-buttons button:hover {
+            background-color: #e5e7eb;
+            color: #1f2937;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .efficiency-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 12px;
+        }
+
+        .efficiency-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 6px 0;
+        }
+
+        .efficiency-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b6b6b;
+        }
+
+        .efficiency-value {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .efficiency-dot {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .efficiency-number {
+            font-size: 18px;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid #e6e6e6;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b6b6b;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        @media (max-width: 1200px) {
+            .columns {
+                grid-template-columns: 1fr;
+            }
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         /* Progress circle SVG styling */
         #progress-circle {
             width: 100%;
@@ -341,7 +650,33 @@
         </section>
 
         <section id="Productivity" class="tabcontent" style="display:none;">
-            <iframe class="productivity-frame" src="http://localhost:8501"></iframe>
+            <div class="productivity-container">
+                <div class="productivity-content">
+                    <h3 style="margin-top: 0;">📅 Weekly Productivity Tracker</h3>
+
+                    <div class="tabs-container" id="tabs-container">
+                        <!-- Tabs generated by JS -->
+                    </div>
+
+                    <div id="tabs-content">
+                        <!-- Tab contents generated by JS -->
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid #e6e6e6; margin: 24px 0;">
+
+                    <h3>📊 Weekly Overview</h3>
+                    <div class="charts-grid" id="charts-container">
+                        <!-- Charts rendered here -->
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid #e6e6e6; margin: 24px 0;">
+
+                    <h3>📈 Weekly Statistics</h3>
+                    <div class="stats-grid" id="stats-container">
+                        <!-- Stats rendered here -->
+                    </div>
+                </div>
+            </div>
         </section>
     </div>
 
@@ -468,6 +803,455 @@
         }
 
         document.getElementsByClassName("tablinks")[0].click();
+    </script>
+
+    <script>
+        /*
+        Productivity App Initialization
+        */
+        const PROD_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const PROD_BLOCKS = ['morning', 'afternoon'];
+        const PROD_COLOR_PALETTE = [
+            '#4285F4',
+            '#EA4335',
+            '#FBBC05',
+            '#34A853',
+            '#9C27B0',
+            '#00ACC1'
+        ];
+
+        let prodWeekData = null;
+
+        function loadProductivityData() {
+            ipcRenderer.invoke('load-productivity-data').then(data => {
+                prodWeekData = data;
+                
+                /* Ensure Vega libraries are loaded */
+                const checkVegaLoaded = setInterval(() => {
+                    if (typeof vegaEmbed !== 'undefined') {
+                        clearInterval(checkVegaLoaded);
+                        renderProductivityTabs();
+                        renderProductivityCharts();
+                        renderProductivityStats();
+                    }
+                }, 100);
+                
+                /* Fallback: render even if Vega not available */
+                setTimeout(() => {
+                    clearInterval(checkVegaLoaded);
+                    if (prodWeekData) {
+                        renderProductivityTabs();
+                        if (typeof vegaEmbed !== 'undefined') {
+                            renderProductivityCharts();
+                        }
+                        renderProductivityStats();
+                    }
+                }, 3000);
+            }).catch(err => {
+                console.error('Failed to load productivity data:', err);
+            });
+        }
+
+        function saveProductivityData() {
+            ipcRenderer.invoke('save-productivity-data', prodWeekData).catch(err => {
+                console.error('Failed to save productivity data:', err);
+            });
+        }
+
+        function prodAddStack(day, block, stackType, minutes) {
+            const stacks = prodWeekData[day][block];
+
+            if (stacks.length === 0 && stackType !== 'work') {
+                return;
+            }
+
+            if (stacks.length > 0 && stacks[stacks.length - 1][0] === stackType) {
+                return;
+            }
+
+            stacks.push([stackType, minutes]);
+            saveProductivityData();
+            renderProductivityTab(day);
+            if (typeof vegaEmbed !== 'undefined') {
+                renderProductivityCharts();
+            }
+            renderProductivityStats();
+        }
+
+        function prodRemoveStack(day, block) {
+            const stacks = prodWeekData[day][block];
+            if (stacks.length > 0) {
+                stacks.pop();
+                saveProductivityData();
+                renderProductivityTab(day);
+                if (typeof vegaEmbed !== 'undefined') {
+                    renderProductivityCharts();
+                }
+                renderProductivityStats();
+            }
+        }
+
+        function prodClearBlock(day, block) {
+            prodWeekData[day][block] = [];
+            saveProductivityData();
+            renderProductivityTab(day);
+            if (typeof vegaEmbed !== 'undefined') {
+                renderProductivityCharts();
+            }
+            renderProductivityStats();
+        }
+
+        function prodSummarizeBlock(day, block) {
+            let work = 0;
+            let rest = 0;
+            prodWeekData[day][block].forEach(([type, minutes]) => {
+                if (type === 'work') {
+                    work += minutes;
+                } else {
+                    rest += minutes;
+                }
+            });
+            return { work, rest };
+        }
+
+        function renderProductivityTabs() {
+            const tabsContainer = document.getElementById('tabs-container');
+            const contentContainer = document.getElementById('tabs-content');
+
+            tabsContainer.innerHTML = '';
+            contentContainer.innerHTML = '';
+
+            PROD_DAYS.forEach((day, index) => {
+                const button = document.createElement('button');
+                button.className = `tab-button ${index === 0 ? 'active' : ''}`;
+                button.textContent = day;
+                button.addEventListener('click', () => prodSwitchTab(day, button));
+                tabsContainer.appendChild(button);
+
+                const content = document.createElement('div');
+                content.className = `tab-content ${index === 0 ? 'active' : ''}`;
+                content.id = `prod-tab-${day}`;
+                contentContainer.appendChild(content);
+            });
+
+            renderProductivityTab('Mon');
+        }
+
+        function renderProductivityTab(day) {
+            const tabElement = document.getElementById(`prod-tab-${day}`);
+            if (!tabElement) return;
+
+            tabElement.innerHTML = '';
+
+            const columns = document.createElement('div');
+            columns.className = 'columns';
+
+            columns.appendChild(prodCreateBlockColumn(day, 'morning'));
+            columns.appendChild(prodCreateBlockColumn(day, 'afternoon'));
+
+            tabElement.appendChild(columns);
+        }
+
+        function prodCreateBlockColumn(day, block) {
+            const { work, rest } = prodSummarizeBlock(day, block);
+            const stacks = prodWeekData[day][block];
+
+            const column = document.createElement('div');
+            column.className = 'column';
+
+            const title = document.createElement('h4');
+            title.textContent = block === 'morning' ? '🌅 Morning' : '🌤️ Afternoon';
+            column.appendChild(title);
+
+            const expander = document.createElement('div');
+            expander.className = 'expander';
+
+            const expanderHeader = document.createElement('button');
+            expanderHeader.className = 'expander-header';
+            expanderHeader.textContent = '📋 View stacks';
+
+            const expanderContent = document.createElement('div');
+            expanderContent.className = 'expander-content';
+
+            if (stacks.length === 0) {
+                expanderContent.innerHTML = '<p style="color: #9ca3af;">No data yet</p>';
+            } else {
+                stacks.forEach((stack, index) => {
+                    const emoji = stack[0] === 'work' ? '💼' : '☕';
+                    const label = stack[0].charAt(0).toUpperCase() + stack[0].slice(1);
+                    const p = document.createElement('p');
+                    p.textContent = `${index + 1}. ${emoji} ${label} - ${stack[1]}min`;
+                    expanderContent.appendChild(p);
+                });
+            }
+
+            expanderHeader.addEventListener('click', () => {
+                expanderHeader.classList.toggle('open');
+                expanderContent.classList.toggle('open');
+            });
+
+            expander.appendChild(expanderHeader);
+            expander.appendChild(expanderContent);
+            column.appendChild(expander);
+
+            const inputRow = document.createElement('div');
+            inputRow.className = 'input-row';
+
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '1';
+            input.max = '300';
+            input.value = '50';
+
+            const buttonGroup = document.createElement('div');
+            buttonGroup.className = 'button-group';
+
+            const workBtn = document.createElement('button');
+            workBtn.textContent = '💼 Work';
+            workBtn.addEventListener('click', () => {
+                prodAddStack(day, block, 'work', parseInt(input.value));
+            });
+
+            const restBtn = document.createElement('button');
+            restBtn.textContent = '☕ Rest';
+            restBtn.addEventListener('click', () => {
+                prodAddStack(day, block, 'rest', parseInt(input.value));
+            });
+
+            buttonGroup.appendChild(workBtn);
+            buttonGroup.appendChild(restBtn);
+
+            inputRow.appendChild(input);
+            inputRow.appendChild(buttonGroup);
+            column.appendChild(inputRow);
+
+            const actionButtons = document.createElement('div');
+            actionButtons.className = 'action-buttons';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = '↶ Remove';
+            removeBtn.addEventListener('click', () => {
+                prodRemoveStack(day, block);
+            });
+
+            const clearBtn = document.createElement('button');
+            clearBtn.textContent = '🗑️ Clear';
+            clearBtn.addEventListener('click', () => {
+                prodClearBlock(day, block);
+            });
+
+            actionButtons.appendChild(removeBtn);
+            actionButtons.appendChild(clearBtn);
+            column.appendChild(actionButtons);
+
+            const efficiencyTitle = document.createElement('h3');
+            efficiencyTitle.textContent = 'Efficiency Check';
+            efficiencyTitle.style.marginTop = '24px';
+            column.appendChild(efficiencyTitle);
+
+            const efficiencyGrid = document.createElement('div');
+            efficiencyGrid.className = 'efficiency-grid';
+
+            const eff1 = document.createElement('div');
+            eff1.className = 'efficiency-item';
+            const label1 = document.createElement('div');
+            label1.className = 'efficiency-label';
+            label1.textContent = 'Rest ≤ Work';
+            const value1 = document.createElement('div');
+            value1.className = 'efficiency-value';
+            const color1 = rest <= work ? '#2e7d32' : '#c62828';
+            value1.innerHTML = `<span class="efficiency-dot" style="color: ${color1};">●</span><span class="efficiency-number">${rest}/${work}</span>`;
+            eff1.appendChild(label1);
+            eff1.appendChild(value1);
+            efficiencyGrid.appendChild(eff1);
+
+            const eff2 = document.createElement('div');
+            eff2.className = 'efficiency-item';
+            const label2 = document.createElement('div');
+            label2.className = 'efficiency-label';
+            label2.textContent = 'Work ≥ 120min';
+            const value2 = document.createElement('div');
+            value2.className = 'efficiency-value';
+            const color2 = work >= 120 ? '#2e7d32' : '#c62828';
+            value2.innerHTML = `<span class="efficiency-dot" style="color: ${color2};">●</span><span class="efficiency-number">${work}min</span>`;
+            eff2.appendChild(label2);
+            eff2.appendChild(value2);
+            efficiencyGrid.appendChild(eff2);
+
+            column.appendChild(efficiencyGrid);
+
+            return column;
+        }
+
+        function prodSwitchTab(day, buttonElement) {
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            buttonElement.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`prod-tab-${day}`).classList.add('active');
+        }
+
+        function renderProductivityCharts() {
+            const container = document.getElementById('charts-container');
+            container.innerHTML = '';
+
+            const morningChartDiv = document.createElement('div');
+            morningChartDiv.className = 'chart-container';
+            morningChartDiv.innerHTML = '<h4>Morning Productivity</h4><div id="morning-chart"></div>';
+            container.appendChild(morningChartDiv);
+
+            const afternoonChartDiv = document.createElement('div');
+            afternoonChartDiv.className = 'chart-container';
+            afternoonChartDiv.innerHTML = '<h4>Afternoon Productivity</h4><div id="afternoon-chart"></div>';
+            container.appendChild(afternoonChartDiv);
+
+            /* Wait for vegaEmbed to be available */
+            if (typeof vegaEmbed !== 'undefined') {
+                const morningData = prodBuildChartData('morning');
+                const afternoonData = prodBuildChartData('afternoon');
+
+                prodRenderVegaChart(document.getElementById('morning-chart'), morningData);
+                prodRenderVegaChart(document.getElementById('afternoon-chart'), afternoonData);
+            } else {
+                /* Retry after a delay */
+                setTimeout(() => {
+                    const morningData = prodBuildChartData('morning');
+                    const afternoonData = prodBuildChartData('afternoon');
+
+                    prodRenderVegaChart(document.getElementById('morning-chart'), morningData);
+                    prodRenderVegaChart(document.getElementById('afternoon-chart'), afternoonData);
+                }, 500);
+            }
+        }
+
+        function prodBuildChartData(block) {
+            const rows = [];
+
+            PROD_DAYS.forEach(day => {
+                const stacks = prodWeekData[day][block];
+
+                rows.push({
+                    Day: day,
+                    Minutes: 0,
+                    StackIndex: -1,
+                    Color: 'rgba(0,0,0,0)'
+                });
+
+                stacks.forEach((stack, idx) => {
+                    rows.push({
+                        Day: day,
+                        Minutes: stack[1],
+                        StackIndex: idx,
+                        Color: PROD_COLOR_PALETTE[idx % PROD_COLOR_PALETTE.length]
+                    });
+                });
+            });
+
+            return rows;
+        }
+
+        function prodRenderVegaChart(container, data) {
+            const spec = {
+                $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+                data: { values: data },
+                mark: 'bar',
+                encoding: {
+                    x: {
+                        field: 'Day',
+                        type: 'nominal',
+                        sort: PROD_DAYS,
+                        scale: { paddingInner: 0.5, paddingOuter: 0.3 },
+                        axis: { labelFontSize: 12, titleFontSize: 12 }
+                    },
+                    y: {
+                        field: 'Minutes',
+                        type: 'quantitative',
+                        stack: true,
+                        axis: { labelFontSize: 12, titleFontSize: 12 }
+                    },
+                    color: {
+                        field: 'Color',
+                        type: 'nominal',
+                        scale: null,
+                        legend: null
+                    },
+                    order: {
+                        field: 'StackIndex',
+                        type: 'quantitative'
+                    },
+                    tooltip: [
+                        { field: 'Day', type: 'nominal', title: 'Day' },
+                        { field: 'Minutes', type: 'quantitative', title: 'Minutes' }
+                    ]
+                },
+                width: 'container',
+                height: 340
+            };
+
+            if (typeof vegaEmbed !== 'undefined') {
+                vegaEmbed(container, spec, { renderer: 'canvas', actions: false });
+            }
+        }
+
+        function renderProductivityStats() {
+            const container = document.getElementById('stats-container');
+            container.innerHTML = '';
+
+            let weekMorningWork = 0;
+            let weekMorningRest = 0;
+            let weekAfternoonWork = 0;
+            let weekAfternoonRest = 0;
+
+            PROD_DAYS.forEach(day => {
+                const [mWork, mRest] = [
+                    prodSummarizeBlock(day, 'morning').work,
+                    prodSummarizeBlock(day, 'morning').rest
+                ];
+                const [aWork, aRest] = [
+                    prodSummarizeBlock(day, 'afternoon').work,
+                    prodSummarizeBlock(day, 'afternoon').rest
+                ];
+
+                weekMorningWork += mWork;
+                weekMorningRest += mRest;
+                weekAfternoonWork += aWork;
+                weekAfternoonRest += aRest;
+            });
+
+            const totalWork = weekMorningWork + weekAfternoonWork;
+            const totalRest = weekMorningRest + weekAfternoonRest;
+            const workRatio = totalWork + totalRest > 0 ? ((totalWork / (totalWork + totalRest)) * 100).toFixed(0) : 0;
+            const dailyAvg = totalWork > 0 ? Math.floor(totalWork / 7) : 0;
+
+            const stat1 = document.createElement('div');
+            stat1.className = 'stat-card';
+            stat1.innerHTML = `<div class="stat-label">📅 Total Work</div><div class="stat-value">${totalWork >= 60 ? (totalWork / 60).toFixed(1) + 'h' : totalWork + 'min'}</div>`;
+            container.appendChild(stat1);
+
+            const stat2 = document.createElement('div');
+            stat2.className = 'stat-card';
+            stat2.innerHTML = `<div class="stat-label">☕ Total Rest</div><div class="stat-value">${totalRest >= 60 ? (totalRest / 60).toFixed(1) + 'h' : totalRest + 'min'}</div>`;
+            container.appendChild(stat2);
+
+            const stat3 = document.createElement('div');
+            stat3.className = 'stat-card';
+            stat3.innerHTML = `<div class="stat-label">📊 Work Ratio</div><div class="stat-value">${workRatio}%</div>`;
+            container.appendChild(stat3);
+
+            const stat4 = document.createElement('div');
+            stat4.className = 'stat-card';
+            stat4.innerHTML = `<div class="stat-label">📆 Daily Avg</div><div class="stat-value">${dailyAvg}min</div>`;
+            container.appendChild(stat4);
+        }
+
+        /* Initialize productivity app when page loads */
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProductivityData();
+        });
     </script>
 </body>
 </html>
