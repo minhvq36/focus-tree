@@ -1,15 +1,19 @@
-const { app, BrowserWindow, ipcMain, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, screen } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 let streamlitProcess;
 
 function createWindow() {
+    /* Get primary display workAreaSize to respect Windows taskbar */
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { width, height } = primaryDisplay.workAreaSize;
     const win = new BrowserWindow({
-        fullscreen: true,
-        alwaysOnTop: true,
-        /* skipTaskbar: false ensures the icon is visible for the user */
+        width: width,
+        height: height,
+        x: 0,
+        y: 0,
         skipTaskbar: false,
-        transparent: false,
+        transparent: true,
         frame: false,
         resizable: false,
         webPreferences: {
@@ -17,10 +21,6 @@ function createWindow() {
             contextIsolation: false
         }
     });
-
-    /* Force the window to stay above the Taskbar 
-    */
-    win.setAlwaysOnTop(true, 'screen-saver');
 
     win.loadFile('index.html');
 
