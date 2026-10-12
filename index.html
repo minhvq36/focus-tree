@@ -571,6 +571,144 @@
             color: #374151;
         }
 
+        /* Daily Tracker Styles */
+        .daily-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .daily-tz {
+            font-size: 12px;
+            font-weight: 400;
+            color: #9ca3af;
+        }
+
+        .daily-btn {
+            padding: 8px 14px;
+            background-color: #f3f4f6;
+            color: #374151;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .daily-btn:hover {
+            background-color: #e5e7eb;
+            border-color: #d1d5db;
+        }
+
+        .daily-btn.active,
+        .daily-btn-primary {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .daily-btn-primary:hover {
+            background-color: #1b5e20;
+        }
+
+        .daily-btn-primary:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .daily-range {
+            display: flex;
+            gap: 6px;
+        }
+
+        .daily-today-card {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            flex-wrap: wrap;
+            padding: 16px 20px;
+            border: 1px solid #e6e6e6;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .daily-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #374151;
+            cursor: pointer;
+        }
+
+        .daily-check input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+
+        .daily-hours,
+        .daily-start {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .daily-hours input,
+        .daily-start input {
+            padding: 8px 10px;
+            border: 1px solid #e6e6e6;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .daily-hours input {
+            width: 80px;
+        }
+
+        .daily-hours input:focus,
+        .daily-start input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+        }
+
+        .daily-save-group {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .daily-status {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .daily-status.dirty {
+            color: #b45309;
+        }
+
+        .daily-chart {
+            box-sizing: border-box;
+        }
+
+        .daily-rules {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-bottom: 12px;
+        }
+
         @media (max-width: 1200px) {
             .columns {
                 grid-template-columns: 1fr;
@@ -626,6 +764,7 @@
         <div class="tab">
             <button class="tablinks active" onclick="openTab(event, 'Stopwatch')">Stopwatch & Auto Notes</button>
             <button class="tablinks" onclick="openTab(event, 'Productivity')">Productivity Inside</button>
+            <button class="tablinks" onclick="openTab(event, 'Daily')">Daily Tracker</button>
         </div>
 
         <section id="Stopwatch" class="tabcontent" style="display:block;">
@@ -679,6 +818,53 @@
                     <div class="stats-grid" id="stats-container">
                         <!-- Stats rendered here -->
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="Daily" class="tabcontent" style="display:none;">
+            <div class="productivity-container">
+                <div class="productivity-content">
+                    <div class="daily-header">
+                        <h3 style="margin: 0;">🗓️ Hôm nay: <span id="daily-today">—</span> <span class="daily-tz">(giờ Việt Nam)</span></h3>
+                        <button class="daily-btn" id="daily-refresh" title="Tải lại dữ liệu & xác định lại ngày">↻ Làm mới</button>
+                    </div>
+
+                    <div class="daily-today-card">
+                        <label class="daily-check"><input type="checkbox" id="daily-planned"> Đã lập kế hoạch</label>
+                        <label class="daily-check"><input type="checkbox" id="daily-reviewed"> Đã review ngày</label>
+                        <label class="daily-hours">Số giờ làm việc
+                            <input type="number" id="daily-hours" min="0" max="24" step="0.1" value="0">
+                        </label>
+                        <div class="daily-save-group">
+                            <span id="daily-status" class="daily-status"></span>
+                            <button class="daily-btn daily-btn-primary" id="daily-save">💾 Lưu</button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" id="daily-stats" style="margin-top: 16px;"></div>
+
+                    <hr style="border: none; border-top: 1px solid #e6e6e6; margin: 24px 0;">
+
+                    <div class="daily-header">
+                        <h3 style="margin: 0;">⏱️ Giờ làm việc</h3>
+                        <div class="daily-range" id="daily-range">
+                            <button class="daily-btn active" data-days="7">7 ngày</button>
+                            <button class="daily-btn" data-days="30">30 ngày</button>
+                        </div>
+                    </div>
+                    <div class="chart-container daily-chart"><div id="daily-hours-chart" style="height:300px;"></div></div>
+
+                    <hr style="border: none; border-top: 1px solid #e6e6e6; margin: 24px 0;">
+
+                    <div class="daily-header">
+                        <h3 style="margin: 0;">🏆 Điểm tích lũy</h3>
+                        <label class="daily-start">Tính từ ngày
+                            <input type="date" id="daily-start">
+                        </label>
+                    </div>
+                    <div class="daily-rules" id="daily-rules"></div>
+                    <div class="chart-container daily-chart"><div id="daily-score-chart" style="height:300px;"></div></div>
                 </div>
             </div>
         </section>
@@ -803,7 +989,8 @@
         const oldOpen = openTab;
         openTab = function(evt, tabName) {
             oldOpen(evt, tabName);
-            setActiveTabButtons(tabName === 'Stopwatch' ? 'Stopwatch' : 'Productivity');
+            setActiveTabButtons(tabName);
+            if (tabName === 'Daily') dailyRefresh();
         }
 
         document.getElementsByClassName("tablinks")[0].click();
@@ -1283,6 +1470,270 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadProductivityData();
         });
+    </script>
+
+    <script>
+        /*
+        Daily Tracker
+        Today is decided by the main process (Asia/Ho_Chi_Minh); only today can be saved.
+        */
+        const DAILY_POINTS = {
+            planned: 1,      /* có lập kế hoạch */
+            reviewed: 1,     /* có review */
+            work: 2,         /* làm việc >= 2h */
+            workStrong: 4,   /* làm việc >= 7h (thay cho mức 2h) */
+            penalty: -3      /* làm việc < 2h: phạt, mất hết thưởng trong ngày */
+        };
+        const DAILY_MIN_HOURS = 2;
+        const DAILY_STRONG_HOURS = 7;
+        const DAILY_EMPTY = { planned: false, reviewed: false, hours: 0 };
+
+        let dailyState = null;   /* { today, startDate, days } */
+        let dailyRangeDays = 7;
+
+        const dailyEls = {
+            today: document.getElementById('daily-today'),
+            planned: document.getElementById('daily-planned'),
+            reviewed: document.getElementById('daily-reviewed'),
+            hours: document.getElementById('daily-hours'),
+            save: document.getElementById('daily-save'),
+            status: document.getElementById('daily-status'),
+            start: document.getElementById('daily-start'),
+            stats: document.getElementById('daily-stats'),
+            rules: document.getElementById('daily-rules')
+        };
+
+        function dailyAddDays(dateStr, n) {
+            const d = new Date(dateStr + 'T00:00:00Z');
+            d.setUTCDate(d.getUTCDate() + n);
+            return d.toISOString().slice(0, 10);
+        }
+
+        function dailyEntry(dateStr) {
+            return (dailyState && dailyState.days[dateStr]) || DAILY_EMPTY;
+        }
+
+        function dailyScore(entry) {
+            if (entry.hours < DAILY_MIN_HOURS) return DAILY_POINTS.penalty;
+            let score = entry.hours >= DAILY_STRONG_HOURS ? DAILY_POINTS.workStrong : DAILY_POINTS.work;
+            if (entry.planned) score += DAILY_POINTS.planned;
+            if (entry.reviewed) score += DAILY_POINTS.reviewed;
+            return score;
+        }
+
+        function dailyFormEntry() {
+            const hours = parseFloat(dailyEls.hours.value);
+            return {
+                planned: dailyEls.planned.checked,
+                reviewed: dailyEls.reviewed.checked,
+                hours: Number.isFinite(hours) ? hours : NaN
+            };
+        }
+
+        function dailyIsDirty() {
+            if (!dailyState) return false;
+            const saved = dailyEntry(dailyState.today);
+            const form = dailyFormEntry();
+            return form.planned !== saved.planned || form.reviewed !== saved.reviewed || form.hours !== saved.hours;
+        }
+
+        function dailyFormatDate(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        function dailyFillForm() {
+            const entry = dailyEntry(dailyState.today);
+            dailyEls.planned.checked = entry.planned;
+            dailyEls.reviewed.checked = entry.reviewed;
+            dailyEls.hours.value = entry.hours;
+        }
+
+        function dailyUpdateStatus() {
+            const form = dailyFormEntry();
+            const valid = form.hours >= 0 && form.hours <= 24;
+            const dirty = dailyIsDirty();
+            dailyEls.save.disabled = !dirty || !valid;
+            dailyEls.status.classList.toggle('dirty', dirty);
+            if (!valid) {
+                dailyEls.status.textContent = 'Số giờ phải từ 0 đến 24';
+            } else if (dirty) {
+                dailyEls.status.textContent = `Chưa lưu • điểm hôm nay sẽ là ${dailyFormatScore(dailyScore(form))}`;
+            } else {
+                dailyEls.status.textContent = dailyState.days[dailyState.today] ? 'Đã lưu' : 'Chưa nhập hôm nay';
+            }
+        }
+
+        function dailyFormatScore(score) {
+            return score > 0 ? `+${score}` : `${score}`;
+        }
+
+        /* Reload from disk. Unsaved form edits survive unless the day rolled over. */
+        async function dailyRefresh() {
+            try {
+                const prevToday = dailyState && dailyState.today;
+                const keepForm = prevToday && dailyIsDirty();
+                const keptEntry = keepForm ? dailyFormEntry() : null;
+
+                dailyState = await ipcRenderer.invoke('daily-load');
+
+                if (keepForm && prevToday === dailyState.today) {
+                    dailyEls.planned.checked = keptEntry.planned;
+                    dailyEls.reviewed.checked = keptEntry.reviewed;
+                    dailyEls.hours.value = keptEntry.hours;
+                } else {
+                    dailyFillForm();
+                }
+                dailyRender();
+            } catch (err) {
+                console.error('Failed to load daily tracker:', err);
+            }
+        }
+
+        async function dailySave() {
+            const entry = dailyFormEntry();
+            const result = await ipcRenderer.invoke('daily-save-today', dailyState.today, entry);
+            if (!result.success) {
+                if (result.error === 'day-changed') {
+                    alert(`Đã sang ngày mới (${dailyFormatDate(result.today)}). Dữ liệu ngày ${dailyFormatDate(dailyState.today)} không thể sửa nữa.`);
+                    dailyState = null;
+                    await dailyRefresh();
+                }
+                return;
+            }
+            dailyState = result;
+            dailyFillForm();
+            dailyRender();
+        }
+
+        async function dailySetStart(startDate) {
+            const result = await ipcRenderer.invoke('daily-set-start', startDate);
+            if (!result.success) return;
+            /* Keep today's unsaved edits; only the start date changed */
+            dailyState.startDate = result.startDate;
+            dailyRender();
+        }
+
+        function dailyRender() {
+            dailyEls.today.textContent = dailyFormatDate(dailyState.today);
+            dailyEls.start.value = dailyState.startDate;
+            dailyEls.rules.textContent =
+                `Lập kế hoạch ${dailyFormatScore(DAILY_POINTS.planned)} • Review ${dailyFormatScore(DAILY_POINTS.reviewed)} • ` +
+                `≥${DAILY_MIN_HOURS}h ${dailyFormatScore(DAILY_POINTS.work)} • ≥${DAILY_STRONG_HOURS}h ${dailyFormatScore(DAILY_POINTS.workStrong)} • ` +
+                `<${DAILY_MIN_HOURS}h ${dailyFormatScore(DAILY_POINTS.penalty)} và mất hết thưởng. Ngày không nhập = 0h. Điểm hôm nay tính theo dữ liệu đã lưu.`;
+            dailyUpdateStatus();
+            dailyRenderStats();
+            dailyRenderCharts();
+        }
+
+        function dailyScoreSeries() {
+            const { today, startDate } = dailyState;
+            /* Start date in the future: nothing counted yet */
+            if (startDate > today) return { x: [today], y: [0] };
+            const x = [];
+            const y = [];
+            let total = 0;
+            for (let d = startDate; d <= today; d = dailyAddDays(d, 1)) {
+                total += dailyScore(dailyEntry(d));
+                x.push(d);
+                y.push(total);
+            }
+            return { x, y };
+        }
+
+        function dailyHoursSeries(n) {
+            const x = [];
+            const y = [];
+            for (let i = n - 1; i >= 0; i--) {
+                const d = dailyAddDays(dailyState.today, -i);
+                x.push(d);
+                y.push(dailyEntry(d).hours);
+            }
+            return { x, y };
+        }
+
+        function dailyRenderStats() {
+            const scores = dailyScoreSeries();
+            const total = scores.y[scores.y.length - 1];
+            const week = dailyHoursSeries(7).y;
+            const weekTotal = week.reduce((a, b) => a + b, 0);
+            const todayScore = dailyScore(dailyEntry(dailyState.today));
+            const cards = [
+                ['🏆 Tổng điểm', dailyFormatScore(total)],
+                ['📅 Điểm hôm nay', dailyFormatScore(todayScore)],
+                ['⏱️ Tổng 7 ngày', `${weekTotal.toFixed(1)}h`],
+                ['📆 TB 7 ngày', `${(weekTotal / 7).toFixed(1)}h/ngày`]
+            ];
+            dailyEls.stats.innerHTML = cards
+                .map(([label, value]) => `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div>`)
+                .join('');
+        }
+
+        function dailyRenderCharts() {
+            /* Plotly mis-sizes charts inside hidden tabs; render only when visible */
+            if (typeof Plotly === 'undefined' || document.getElementById('Daily').style.display === 'none') return;
+
+            const baseLayout = {
+                autosize: true,
+                height: 300,
+                margin: { t: 10, b: 40, l: 45, r: 15 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                font: { family: 'Inter, Arial', size: 12, color: '#6b6b6b' },
+                hovermode: 'x unified',
+                showlegend: false,
+                xaxis: { type: 'date', tickformat: '%d/%m', gridcolor: '#f0f0f0', hoverformat: '%d/%m/%Y' }
+            };
+            const config = { responsive: true, displayModeBar: false };
+            const line = { color: '#2e7d32', width: 2 };
+            const marker = { color: '#2e7d32', size: 8, line: { color: '#ffffff', width: 2 } };
+
+            const hours = dailyHoursSeries(dailyRangeDays);
+            const thresholdLine = (y, label) => ({
+                type: 'line', xref: 'paper', x0: 0, x1: 1, y0: y, y1: y,
+                line: { color: '#9ca3af', width: 1, dash: 'dot' }, label: { text: label, textposition: 'end', font: { size: 11, color: '#9ca3af' } }
+            });
+            Plotly.react('daily-hours-chart', [{
+                x: hours.x, y: hours.y, type: 'scatter', mode: 'lines+markers',
+                line, marker, hovertemplate: '%{y:.2f}h<extra></extra>'
+            }], {
+                ...baseLayout,
+                yaxis: { rangemode: 'tozero', gridcolor: '#f0f0f0', ticksuffix: 'h' },
+                shapes: [thresholdLine(DAILY_MIN_HOURS, `${DAILY_MIN_HOURS}h`), thresholdLine(DAILY_STRONG_HOURS, `${DAILY_STRONG_HOURS}h`)]
+            }, config);
+
+            const scores = dailyScoreSeries();
+            Plotly.react('daily-score-chart', [{
+                x: scores.x, y: scores.y, type: 'scatter', mode: scores.x.length > 60 ? 'lines' : 'lines+markers',
+                line, marker, hovertemplate: '%{y} điểm<extra></extra>'
+            }], {
+                ...baseLayout,
+                yaxis: { gridcolor: '#f0f0f0', zeroline: true, zerolinecolor: '#6b6b6b', zerolinewidth: 1 }
+            }, config);
+        }
+
+        [dailyEls.planned, dailyEls.reviewed].forEach(el => el.addEventListener('change', dailyUpdateStatus));
+        dailyEls.hours.addEventListener('input', dailyUpdateStatus);
+        dailyEls.save.addEventListener('click', dailySave);
+        document.getElementById('daily-refresh').addEventListener('click', dailyRefresh);
+        dailyEls.start.addEventListener('change', () => {
+            if (dailyEls.start.value) dailySetStart(dailyEls.start.value);
+        });
+        document.querySelectorAll('#daily-range .daily-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#daily-range .daily-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                dailyRangeDays = Number(btn.dataset.days);
+                dailyRenderCharts();
+            });
+        });
+
+        /* Detect midnight (VN) rollover while the app stays open */
+        setInterval(async () => {
+            if (!dailyState) return;
+            const today = await ipcRenderer.invoke('daily-today');
+            if (today !== dailyState.today) dailyRefresh();
+        }, 60 * 1000);
     </script>
 </body>
 </html>

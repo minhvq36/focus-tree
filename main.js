@@ -3,6 +3,8 @@ const path = require('path');
 const fs = require('fs');
 
 function getDataPath() {
+    /* FOCUSTREE_DATA_DIR lets dev runs use a sandbox dir instead of live data */
+    if (process.env.FOCUSTREE_DATA_DIR) return process.env.FOCUSTREE_DATA_DIR;
     const appdata = process.env.APPDATA || process.env.HOME;
     return path.join(appdata, 'FocusTree');
 }
@@ -125,6 +127,78 @@ ipcMain.handle('save-productivity-data', async (event, data) => {
         console.error('Error saving productivity data:', err);
         throw err;
     }
+});
+
+/*
+IPC Handlers for Daily Tracker
+Only today's entry (Vietnam time) can be written; past days are read-only.
+*/
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function getDailyFile() {
+    return path.join(getDataPath(), 'daily_tracker.json');
+}
+
+function vnToday() {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(new Date());
+    const get = type => parts.find(p => p.type === type).value;
+    return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+function writeDaily(data) {
+    ensureDataDir();
+    fs.writeFileSync(getDailyFile(), JSON.stringify(data, null, 2), 'utf8');
+}
+
+function readDaily() {
+    const dataFile = getDailyFile();
+    if (fs.existsSync(dataFile)) {
+        const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+        if (!DATE_RE.test(data.startDate)) data.startDate = vnToday();
+        if (!data.days || typeof data.days !== 'object') data.days = {};
+        return data;
+    }
+    /* First run: pin the start date to today so it doesn't drift */
+    const data = { startDate: vnToday(), days: {} };
+    writeDaily(data);
+    return data;
+}
+
+ipcMain.handle('daily-today', async () => vnToday());
+
+ipcMain.handle('daily-load', async () => {
+    return { today: vnToday(), ...readDaily() };
+});
+
+ipcMain.handle('daily-save-today', async (event, clientDate, entry) => {
+    const today = vnToday();
+    if (clientDate !== today) {
+        return { success: false, error: 'day-changed', today };
+    }
+    const hours = Number(entry.hours);
+    if (!Number.isFinite(hours) || hours < 0 || hours > 24) {
+        return { success: false, error: 'invalid-hours', today };
+    }
+    const data = readDaily();
+    data.days[today] = {
+        planned: !!entry.planned,
+        reviewed: !!entry.reviewed,
+        hours: Math.round(hours * 100) / 100
+    };
+    writeDaily(data);
+    return { success: true, today, ...data };
+});
+
+ipcMain.handle('daily-set-start', async (event, startDate) => {
+    if (!DATE_RE.test(startDate)) {
+        return { success: false, error: 'invalid-date' };
+    }
+    const data = readDaily();
+    data.startDate = startDate;
+    writeDaily(data);
+    return { success: true, today: vnToday(), ...data };
 });
 
 app.whenReady().then(createWindow);
