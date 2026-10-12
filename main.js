@@ -130,6 +130,15 @@ ipcMain.handle('save-productivity-data', async (event, data) => {
 });
 
 /*
+IPC Handler for Auto Notes
+*/
+ipcMain.handle('append-note', async (event, line) => {
+    ensureDataDir();
+    fs.appendFileSync(path.join(getDataPath(), 'AUTONOTES.txt'), line, 'utf8');
+    return { success: true };
+});
+
+/*
 IPC Handlers for Daily Tracker
 Only today's entry (Vietnam time) can be written; past days are read-only.
 */

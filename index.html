@@ -871,8 +871,6 @@
     </div>
 
     <script>
-        const fs = require('fs');
-        const path = require('path');
         const { ipcRenderer } = require('electron');
 
         let startTime = null;
@@ -954,14 +952,13 @@
 
             const timestamp = new Date().toLocaleString('vi-VN');
             const line = `[${timestamp}] ${note}\n`;
-            const filePath = path.join(__dirname, 'AUTONOTES.txt');
 
-            try {
-                fs.appendFileSync(filePath, line, 'utf8');
+            /* Notes live in the data dir (not the app dir) so rebuilds can't wipe them */
+            ipcRenderer.invoke('append-note', line).then(() => {
                 noteInput.value = '';
-            } catch (err) {
+            }).catch(err => {
                 alert('❌ Lỗi khi ghi file: ' + err.message);
-            }
+            });
         }
 
         // Topbar behavior

@@ -39,7 +39,7 @@ The app opens full screen (respecting the Windows taskbar) in a frameless window
   | 2 h     | 🌲 |
 
   A popup announces each evolution.
-- **Auto Notes**: type a note and press *Submit* — it is appended with a timestamp to `AUTONOTES.txt` next to the app files.
+- **Auto Notes**: type a note and press *Submit* — it is appended with a timestamp to `AUTONOTES.txt` in the [data folder](#data-storage).
 
 ### 2. Productivity Inside
 
@@ -102,24 +102,34 @@ npm start          # or: npx electron .
 
 ## Building a Windows Executable
 
+Close the running app first (Windows locks its files), then:
+
 ```bash
-npx electron-packager . FocusTreeApp --platform=win32 --arch=x64 --overwrite --icon=icon.ico
+npm run build
 ```
 
 The packaged app is written to `FocusTreeApp-win32-x64/`; launch `FocusTreeApp.exe`.
+
+`npm run build` runs [`scripts/build.js`](scripts/build.js), which protects your data before packaging:
+
+1. **Snapshots the data folder** into `%APPDATA%\FocusTree\backups\<UTC timestamp>\` (the 10 most recent snapshots are kept).
+2. **Rescues old notes**: versions ≤ 1.2 wrote `AUTONOTES.txt` *inside* the build folder (`resources\app\`), which every rebuild deleted. If such a file is found, it is copied into the snapshot and merged (at the top) into `%APPDATA%\FocusTree\AUTONOTES.txt`. The build aborts if the merge cannot be verified.
+3. **Packages** with `electron-packager --overwrite`, replacing only `FocusTreeApp-win32-x64/`.
+
+> ⚠️ Always build with `npm run build` rather than calling `electron-packager` directly. The build folder is disposable — never keep anything you care about inside it.
 
 ---
 
 ## Data Storage
 
-All tracker data lives in `%APPDATA%\FocusTree\`:
+All user data lives in `%APPDATA%\FocusTree\`, outside the app folder, so rebuilding or reinstalling never touches it:
 
 | File | Used by |
 |------|---------|
+| `AUTONOTES.txt` | Stopwatch & Auto Notes |
 | `productivity_data.json` | Productivity Inside (weekly stacks) |
 | `daily_tracker.json` | Daily Tracker (`startDate` + one entry per day) |
-
-Auto notes are written to `AUTONOTES.txt` in the app directory.
+| `backups\` | Snapshots taken by `npm run build` |
 
 `daily_tracker.json` format:
 
@@ -144,6 +154,8 @@ focus-tree/
 ├── index.html            # Renderer: all three tabs (UI, styles and scripts)
 ├── icon.ico              # App icon used when packaging
 ├── package.json
+├── scripts/
+│   └── build.js          # Safe build: back up data, rescue old notes, package
 ├── productivity.html     # Legacy standalone version of the Productivity tab
 ├── productivity.js       #   (not loaded by the app)
 └── productivity_app.py   # Legacy Streamlit prototype of the Productivity tab
